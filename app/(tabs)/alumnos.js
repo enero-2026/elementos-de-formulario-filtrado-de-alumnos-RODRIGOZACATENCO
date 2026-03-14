@@ -1,11 +1,12 @@
 import { FlatList, View, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { List, Text, Searchbar, Divider, Avatar, Surface } from 'react-native-paper';
+import { List, Text, Searchbar, Divider, Avatar, Surface, IconButton } from 'react-native-paper';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 export default function Alumnos() {
   const [alumnos, setAlumnos] = useState([]);
   const [buscaAlumno, setBuscaAlumno] = useState('');
+  const [orden, setOrden] = useState('asc');
 
   useEffect(() => {
     setTimeout(() => {
@@ -47,10 +48,22 @@ export default function Alumnos() {
     }, 2000);
   }, []);
 
-  const alumnosFiltrados = alumnos.filter(alumno => 
-    alumno.nombre.toLowerCase().includes(buscaAlumno.toLowerCase()) ||
-    alumno.matricula.includes(buscaAlumno)
-  );
+  const alumnosProcesados = alumnos
+    .filter(alumno => 
+      alumno.nombre.toLowerCase().includes(buscaAlumno.toLowerCase()) ||
+      alumno.matricula.includes(buscaAlumno)
+    )
+    .sort((a, b) => {
+      if (orden === 'asc') {
+        return a.nombre.localeCompare(b.nombre);
+      } else {
+        return b.nombre.localeCompare(a.nombre);
+      }
+    });
+
+  const cambiarOrden = () => {
+    setOrden(prev => (prev === 'asc' ? 'desc' : 'asc'));
+  };
 
   if (!alumnos.length) {
     return (
@@ -63,34 +76,36 @@ export default function Alumnos() {
   return (
     <View style={styles.container}>
       <Surface style={styles.header} elevation={1}>
-        <Searchbar
-          placeholder="Buscar alumno o matrícula"
-          onChangeText={setBuscaAlumno}
-          value={buscaAlumno}
-          style={styles.searchbar}
-        />
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder="Buscar alumno..."
+            onChangeText={setBuscaAlumno}
+            value={buscaAlumno}
+            style={styles.searchbar}
+          />
+          <IconButton
+            icon={orden === 'asc' ? "sort-alphabetical-ascending" : "sort-alphabetical-descending"}
+            mode="contained"
+            containerColor="#6200ee"
+            iconColor="white"
+            size={28}
+            onPress={cambiarOrden}
+          />
+        </View>
       </Surface>
 
       <FlatList
-        data={alumnosFiltrados}
+        data={alumnosProcesados}
         keyExtractor={(item, index) => item.matricula + index}
         ItemSeparatorComponent={() => <Divider />}
         renderItem={({ item }) => (
           <List.Item
             title={item.nombre}
-            titleStyle={styles.title}
             description={`Matrícula: ${item.matricula}`}
-            descriptionStyle={styles.description}
             left={props => (
-              <Avatar.Icon 
-                {...props} 
-                icon="account" 
-                size={48} 
-                style={styles.avatar} 
-              />
+              <Avatar.Icon {...props} icon="account" size={48} style={styles.avatar} />
             )}
             right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => console.log('Alumno seleccionado:', item.nombre)}
           />
         )}
         ListEmptyComponent={
@@ -115,25 +130,23 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    padding: 15,
+    padding: 10,
     backgroundColor: 'white',
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
     marginBottom: 5,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   searchbar: {
+    flex: 1,
     backgroundColor: '#f0f0f0',
     borderRadius: 10,
   },
-  title: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  description: {
-    color: '#666',
-  },
   avatar: {
-    backgroundColor: '#6200ee', // Color temático
+    backgroundColor: '#6200ee',
   }
 });
